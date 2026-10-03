@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd8deac88572be845aa37f331e4528ca, type: 3}
+  m_Name: Stage0
+  m_EditorClassIdentifier: 
+  title: "67 \uBC08"
+  instruction: "6\uACFC 7\uC774 \uB5A8\uC5B4\uC9D1\uB2C8\uB2E4. \uC608\uACE0\uC120\uC744
+    \uBCF4\uACE0 \uD53C\uD558\uC138\uC694!"
+  pattern: 0
+  layoutPrefab: {fileID: 3474168817196134834, guid: eba2c4cc8434f58418458caba7b62c70, type: 3}
+  memePrefabs:
+  - {fileID: 929881337520303674, guid: a17331a8c1ae5ed42a8b9edd60f242db, type: 3}
+  - {fileID: 6687839958178468225, guid: 3e7cf1bc3f204df4885f4e88892113c5, type: 3}
+  - {fileID: 6634802910851978083, guid: d92323c550a00724db1abe473147cdf2, type: 3}
+  laserPosition: {x: 0, y: -2.7}
+  laserSize: {x: 16, y: 0.12}
+  duration: 18
+  attackInterval: 1.35
+  warningDuration: 0.8
+  projectileSpeed: 4

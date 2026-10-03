@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd8deac88572be845aa37f331e4528ca, type: 3}
+  m_Name: Stage1
+  m_EditorClassIdentifier: 
+  title: "L\uC744 \uAC00\uC838\uC640"
+  instruction: "L\uC744 \uB6F0\uC5B4\uB118\uACE0, \uB808\uC774\uC800\uAC00 \uCF1C\uC9C0\uAE30
+    \uC804\uC5D0 \uC810\uD504!"
+  pattern: 1
+  layoutPrefab: {fileID: 6460744410897519010, guid: 0b54232e32632054aa4305816973ec52, type: 3}
+  memePrefabs:
+  - {fileID: 3716929682244707735, guid: c00822f464783a54c86be69e3f7e646e, type: 3}
+  - {fileID: 7874760877609795216, guid: 51d28489b42f2c34db562bb37b908ff6, type: 3}
+  - {fileID: 2962921385333835830, guid: 58e337bf3cd81434aa90ae90c73c6915, type: 3}
+  - {fileID: 3811077399696923575, guid: a092b348877a058428928a31fd2deed0, type: 3}
+  - {fileID: 2900713786396517820, guid: 5cf5b27551cd55245a8691c830c00158, type: 3}
+  laserPosition: {x: 0, y: -2.7}
+  laserSize: {x: 16, y: 0.12}
+  duration: 18
+  attackInterval: 2.1
+  warningDuration: 0.8
+  projectileSpeed: 4

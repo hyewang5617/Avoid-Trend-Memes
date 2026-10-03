@@ -1,0 +1,68 @@
+# Unity-generated caches and local settings
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+.utmp/
+*.log
+
+# Pipeline playtest captures (not game assets)
+/Assets/Temp/*.png
+/Assets/Temp/*.png.meta
+
+# IDE-generated files and local caches
+.vs/
+.gradle/
+ExportedObj/
+.consulo/
+*.csproj
+*.unityproj
+*.sln
+*.slnx
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.DotSettings.user
+/[Aa]ssets/Plugins/Editor/JetBrains*
+
+# Generated sidecars only; keep normal Unity .meta files
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+*.blend1
+*.blend1.meta
+
+# Build outputs and crash reports
+*.apk
+*.aab
+*.unitypackage
+*.unitypackage.meta
+*.app
+sysinfo.txt
+mono_crash.*
+crashlytics-build.properties
+
+# Generated package data
+/ServerData/
+/[Aa]ssets/StreamingAssets/aa*
+/[Aa]ssets/AddressableAssetsData/link.xml*
+/[Aa]ssets/AddressableAssetsData/*/*.bin*
+/[Aa]ssets/Addressables_Temp*
+/[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Flow/UnitOptions.db*
+/[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Core/Property Providers*
+/[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+/UIElementsSchema/
+/[Aa]ssets/[Ss]ceneDependencyCache*
