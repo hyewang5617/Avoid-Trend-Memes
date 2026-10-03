@@ -19,7 +19,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2881664584297830332
 Transform:
   m_ObjectHideFlags: 0
@@ -176,6 +176,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2405288393530694353}
+  - component: {fileID: 7446860949097056607}
   m_Layer: 0
   m_Name: Stage2Layout
   m_TagString: Untagged
@@ -200,6 +201,27 @@ Transform:
   - {fileID: 2881664584297830332}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7446860949097056607
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7847710194829088918}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c556e47828c2c3f41ad6ee4b15bcf5f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  facePrefab: {fileID: 6654746377414175944, guid: 3bc266345ef90c74e8aea8aa4ac523cb, type: 3}
+  handPrefab: {fileID: 3555142407871977479, guid: 50166e575dc0ebf43a10c2d9ae725d54, type: 3}
+  warningPrefab: {fileID: 8189421011179669504, guid: 4d3ea1b67a5f7bd4b8be5be8bafe9ada, type: 3}
+  cheerAudio: {fileID: 8300000, guid: c94c2f74b9e77ef4c8b884c748538101, type: 3}
+  sixSevenAudio: {fileID: 8300000, guid: dd28178effc8a4f45b103f07fb53105c, type: 3}
+  platformY: -1
+  platformX: 5
+  platformWidth: 3
+  handHeight: 3
 --- !u!1 &9210966025427267784
 GameObject:
   m_ObjectHideFlags: 0
@@ -219,7 +241,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &8388692147008455070
 Transform:
   m_ObjectHideFlags: 0

@@ -1,0 +1,57 @@
+async Cysharp.Threading.Tasks.UniTask Verify()
+{
+    string path = "C:/GitHub/Puzzle-and-animal/tmp/verification/geoje-stage.txt";
+    try
+    {
+        var game = UnityEngine.Object.FindFirstObjectByType<MemeDodge.GameController>();
+        game.testStageNumber = 3;
+        game.startButton.onClick.Invoke();
+        MemeDodge.GeojeStage stage = null;
+        float deadline = UnityEngine.Time.realtimeSinceStartup + 15;
+        while (stage == null && UnityEngine.Time.realtimeSinceStartup < deadline)
+        {
+            stage = UnityEngine.Object.FindFirstObjectByType<MemeDodge.GeojeStage>();
+            await Cysharp.Threading.Tasks.UniTask.Delay(100);
+        }
+        if (stage == null) { System.IO.File.WriteAllText(path, "FAIL: Stage3 failed to load"); return; }
+        var session = (MemeDodge.GameSession)typeof(MemeDodge.GameController).GetField("session", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(game);
+        typeof(MemeDodge.GameSession).GetField("invulnerableUntil", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(session, float.PositiveInfinity);
+        int four = 0, five = 0;
+        foreach (int panel in stage.PatternOrder) { if (panel == 4) four++; if (panel == 5) five++; }
+        var shots = new System.Collections.Generic.HashSet<int>();
+        var geojeShots = new System.Collections.Generic.HashSet<int>();
+        var yahoShots = new System.Collections.Generic.HashSet<int>();
+        var panels = new System.Collections.Generic.HashSet<int>();
+        bool frozen = false, wallMoved = false, musicPlaying = false;
+        float previousWallX = float.NaN;
+        var lastPositions = new System.Collections.Generic.Dictionary<int, float>();
+        deadline = UnityEngine.Time.realtimeSinceStartup + 55;
+        while (stage != null && !stage.Completed && UnityEngine.Time.realtimeSinceStartup < deadline)
+        {
+            panels.Add(stage.CurrentPanel);
+            var wall = UnityEngine.GameObject.Find("ApproachingWall");
+            if (wall != null) { if (!float.IsNaN(previousWallX) && wall.transform.position.x > previousWallX) wallMoved = true; previousWallX = wall.transform.position.x; }
+            foreach (var danger in UnityEngine.Object.FindObjectsByType<MemeDodge.Danger>(UnityEngine.FindObjectsSortMode.None))
+            {
+                if (danger.name == "GuidedTriangle") shots.Add(danger.GetInstanceID());
+                if (danger.name == "GeojeShot") geojeShots.Add(danger.GetInstanceID());
+                if (danger.name == "YahoShot") yahoShots.Add(danger.GetInstanceID());
+                if (danger.name == "GeojeShot" || danger.name == "YahoShot" || danger.name == "GeojeYahoShot")
+                {
+                    int id = danger.GetInstanceID();
+                    if (lastPositions.TryGetValue(id, out float y) && UnityEngine.Mathf.Abs(y - danger.transform.position.y) < .001f) frozen = true;
+                    lastPositions[id] = danger.transform.position.y;
+                }
+            }
+            foreach (var audio in stage.GetComponents<UnityEngine.AudioSource>())
+                if (audio.isPlaying && audio.clip == stage.danceAudio) musicPlaying = true;
+            await Cysharp.Threading.Tasks.UniTask.Delay(80);
+        }
+        bool complete = stage != null && stage.Completed;
+        bool pass = complete && four == 9 && five == 9 && geojeShots.Count == 9 && yahoShots.Count == 9 && shots.Count == 13 && panels.Count == 5 && wallMoved && musicPlaying && frozen;
+        System.IO.File.WriteAllText(path, (pass ? "PASS" : "FAIL") + $": complete={complete}; 4={four}; 5={five}; actualGeoje={geojeShots.Count}; actualYaho={yahoShots.Count}; triangles={shots.Count}; panels={panels.Count}; wall={wallMoved}; dance={musicPlaying}; fixedShots={frozen}");
+    }
+    catch (System.Exception error) { System.IO.File.WriteAllText(path, "FAIL: " + error); }
+}
+Cysharp.Threading.Tasks.UniTaskExtensions.Forget(Verify());
+return "verification running";

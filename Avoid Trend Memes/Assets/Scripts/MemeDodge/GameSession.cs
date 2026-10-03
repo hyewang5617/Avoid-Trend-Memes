@@ -37,10 +37,11 @@ namespace MemeDodge
             Phase.Value = GamePhase.Loading;
         }
 
-        public bool Damage(float time)
+        public bool Damage(float time, bool ignoreInvulnerability = false)
         {
-            if (Phase.Value != GamePhase.Playing || time < invulnerableUntil) return false;
-            invulnerableUntil = time + 1f;
+            bool canDamage = Phase.Value == GamePhase.Playing || ignoreInvulnerability && Phase.Value == GamePhase.Reward;
+            if (!canDamage || !ignoreInvulnerability && time < invulnerableUntil) return false;
+            invulnerableUntil = time + 2f;
             Health.Value = Math.Max(0, Health.Value - 1);
             if (Health.Value == 0) Phase.Value = GamePhase.GameOver;
             return true;

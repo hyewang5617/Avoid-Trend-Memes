@@ -1,0 +1,28 @@
+var root = new UnityEngine.GameObject("Stage3Layout");
+var stage = root.AddComponent<MemeDodge.GeojeStage>();
+stage.portraitPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>("Assets/Game/Memes/4_미나미.prefab");
+stage.fullPhrasePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>("Assets/Game/Memes/4_거제야호.prefab");
+stage.geojePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>("Assets/Game/Memes/4_거제.prefab");
+stage.yahoPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>("Assets/Game/Memes/4_야호.prefab");
+stage.warningPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>("Assets/Game/Effects/WarningArea.prefab");
+stage.introAudio = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.AudioClip>("Assets/Audio/4_거제 가잖아.mp3");
+stage.citizensAudio = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.AudioClip>("Assets/Audio/4_거제시민들한테.mp3");
+stage.danceAudio = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.AudioClip>("Assets/Audio/4_파라파라 댄스.mp3");
+stage.fullPhraseAudio = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.AudioClip>("Assets/Audio/4_거제 야호_[cut_3sec].mp3");
+stage.geojeAudio = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.AudioClip>("Assets/Audio/4_거제.mp3");
+stage.yahoAudio = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.AudioClip>("Assets/Audio/4_야호.mp3");
+var layout = UnityEditor.PrefabUtility.SaveAsPrefabAsset(root, "Assets/Game/Layouts/Stage3Layout.prefab");
+UnityEngine.Object.DestroyImmediate(root);
+var definition = UnityEditor.AssetDatabase.LoadAssetAtPath<MemeDodge.StageDefinition>("Assets/Game/Stages/Stage3.asset");
+if (definition == null) { definition = UnityEngine.ScriptableObject.CreateInstance<MemeDodge.StageDefinition>(); UnityEditor.AssetDatabase.CreateAsset(definition, "Assets/Game/Stages/Stage3.asset"); }
+definition.title = "거제야호 밈";
+definition.instruction = "다가오는 벽과 유도 공격을 피하고 발판을 오르세요!";
+definition.layoutPrefab = layout;
+definition.duration = layout.GetComponent<MemeDodge.GeojeStage>().Duration;
+UnityEditor.EditorUtility.SetDirty(definition);
+var settings = UnityEditor.AddressableAssets.AddressableAssetSettingsDefaultObject.Settings;
+var entry = settings.CreateOrMoveEntry(UnityEditor.AssetDatabase.AssetPathToGUID("Assets/Game/Stages/Stage3.asset"), settings.DefaultGroup);
+entry.address = "stage-3";
+UnityEditor.EditorUtility.SetDirty(settings);
+UnityEditor.AssetDatabase.SaveAssets();
+return new { duration = definition.duration, layout = layout.name, address = entry.address };

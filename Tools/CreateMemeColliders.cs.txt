@@ -8,10 +8,14 @@ UnityEditor.AssetDatabase.Refresh();
 System.IO.Directory.CreateDirectory("Assets/Game/Memes");
 UnityEditor.AssetDatabase.Refresh();
 var report = new System.Text.StringBuilder();
+// Keep manually edited prefabs intact. Set true only for an intentional regeneration.
+bool overwriteExisting = false;
 foreach (var guid in UnityEditor.AssetDatabase.FindAssets("t:Texture2D", new[] { "Assets/Images" }))
 {
     var path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
     if (!path.EndsWith(".png", System.StringComparison.OrdinalIgnoreCase)) continue;
+    var targetPrefabPath = "Assets/Game/Memes/" + System.IO.Path.GetFileNameWithoutExtension(path) + ".prefab";
+    if (!overwriteExisting && System.IO.File.Exists(targetPrefabPath)) continue;
     var importer = UnityEditor.AssetImporter.GetAtPath(path) as UnityEditor.TextureImporter;
     if (importer == null) throw new System.Exception("Missing texture importer: " + path);
     importer.textureType = UnityEditor.TextureImporterType.Sprite;
@@ -60,6 +64,9 @@ foreach (var guid in UnityEditor.AssetDatabase.FindAssets("t:Texture2D", new[] {
         }
         if (path.EndsWith("1_인직이.png")) close(530, 820, 1065, 815);
         if (path.EndsWith("2_셀카.png")) { close(731, 900, 1031, 887); close(1145, 443, 1145, 457); }
+        if (path.EndsWith("3_67.png")) close(517, 893, 1269, 893);
+        if (path.EndsWith("3_손.png")) close(988, 315, 999, 347);
+        if (path.EndsWith("4_미나미.png")) { close(987, 897, 1516, 893); close(1035, 435, 1045, 435); }
         // Close tiny breaks in hand-drawn outlines using a 9-pixel square kernel.
         // Separable prefix sums keep this linear in the number of pixels.
         for (int pass = 0; pass < 4; pass++)
@@ -125,8 +132,7 @@ foreach (var guid in UnityEditor.AssetDatabase.FindAssets("t:Texture2D", new[] {
         go.AddComponent<MemeDodge.Danger>();
         UnityEngine.Physics2D.SyncTransforms();
         if (collider.bounds.size.y > 1.6f || collider.bounds.size.y < 1f) throw new System.Exception("Unexpected collider bounds: " + path);
-        var prefabPath = "Assets/Game/Memes/" + go.name + ".prefab";
-        UnityEditor.PrefabUtility.SaveAsPrefabAsset(go, prefabPath);
+        UnityEditor.PrefabUtility.SaveAsPrefabAsset(go, targetPrefabPath);
         report.AppendLine(go.name + ": " + paths.Count + " paths, " + vertices + " vertices, bounds " + collider.bounds.size);
     }
     finally { if (go != null) UnityEngine.Object.DestroyImmediate(go); UnityEngine.Object.DestroyImmediate(texture); }

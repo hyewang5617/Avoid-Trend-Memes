@@ -24,6 +24,11 @@ namespace MemeDodge
         public Font worldFont;
         public Material lineMaterial;
         public AudioSource sound;
+        [Header("Stage testing")]
+        [Tooltip("-1: normal progression. 0: Gamst. Non-negative numbers repeat only that stage.")]
+        public int testStageNumber = 0;
+        [Tooltip("Below this world Y, lose one HP and return to a safe surface.")]
+        public float fallY = -5;
         GameSession session;
         GameAssets assets;
         readonly List<IDisposable> subscriptions = new();
@@ -39,6 +44,9 @@ namespace MemeDodge
         SpriteRenderer[] playerSprites;
         public GameObject[] defaultPlatforms;
         GameObject stageLayout;
+        GameObject gameOverPanel;
+        UnityEngine.UI.Text resultRank, resultScore;
+        int gameOverFrame;
 
         [Inject] public void Construct(GameSession state, GameAssets resources) { session = state; assets = resources; }
 
@@ -56,6 +64,7 @@ namespace MemeDodge
             scoreRect.sizeDelta = new Vector2(280, 50);
             scoreText.fontSize = 26;
             scoreText.raycastTarget = false;
+            BuildGameOverUI();
             subscriptions.Add(session.Score.Subscribe(value => scoreText.text = $"SCORE  {value}"));
             if (sound != null) { sound.Stop(); sound.playOnAwake = false; sound.mute = true; }
             subscriptions.Add(session.Health.Subscribe(value => healthText.text = $"HP  {new string('●', value)}{new string('○', GameSession.MaxHealth - value)}"));
@@ -72,6 +81,22 @@ namespace MemeDodge
         void LateUpdate()
         {
             if (session == null || !player.enabled) return;
+            if ((session.Phase.Value == GamePhase.Playing || session.Phase.Value == GamePhase.Reward)
+                && player.transform.position.y < fallY)
+            {
+                var sixSeven = stageLayout == null ? null : stageLayout.GetComponent<SixSevenStage>();
+                if (sixSeven != null && !sixSeven.Completed) sixSeven.RecoverToPlatform();
+                else
+                {
+                    float halfHeight = player.GetComponent<BoxCollider2D>().bounds.extents.y;
+                    var position = new Vector2(Mathf.Clamp(player.transform.position.x, -7, 7), -3.3f + halfHeight + .08f);
+                    playerBody.position = position;
+                    player.transform.position = position;
+                    player.ResetAfterTeleport();
+                    Physics2D.SyncTransforms();
+                }
+                HitPlayer(true);
+            }
             float tilt = Mathf.Clamp(-playerBody.linearVelocity.x * 1.4f, -9f, 9f);
             float angle = Mathf.LerpAngle(playerArt.localEulerAngles.z, tilt, 1 - Mathf.Exp(-12 * Time.deltaTime));
             playerArt.localRotation = Quaternion.Euler(0, 0, angle);
@@ -100,7 +125,68 @@ namespace MemeDodge
             player.enabled = canMove;
             input.enabled = canMove;
             if (!canMove) input.Clear();
-            if (phase == GamePhase.GameOver) EndRun().Forget(Debug.LogException);
+            if (gameOverPanel != null) gameOverPanel.SetActive(phase == GamePhase.GameOver);
+            if (phase == GamePhase.GameOver) EndRun();
+        }
+
+        void Update()
+        {
+            var keyboard = UnityEngine.InputSystem.Keyboard.current;
+            if (session == null || !Application.isFocused || keyboard == null) return;
+            if (session.Phase.Value == GamePhase.GameOver && Time.frameCount > gameOverFrame && keyboard.rKey.wasPressedThisFrame) ReturnToTitle();
+            else if (session.Phase.Value == GamePhase.Title && !starting && keyboard.spaceKey.wasPressedThisFrame)
+            {
+                input.Clear();
+                UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
+                StartRun().Forget(Debug.LogException);
+            }
+        }
+
+        void BuildGameOverUI()
+        {
+            gameOverPanel = new GameObject("GameOverPanel", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+            gameOverPanel.transform.SetParent(titlePanel.transform.parent, false);
+            var rect = gameOverPanel.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one; rect.sizeDelta = Vector2.zero;
+            gameOverPanel.GetComponent<UnityEngine.UI.Image>().color = Color.black;
+            resultRank = ResultLabel("Rank", new Vector2(.28f, .5f), new Vector2(480, 440), 280);
+            resultScore = ResultLabel("FinalScore", new Vector2(.68f, .65f), new Vector2(430, 100), 48);
+            var buttonObject = new GameObject("ReturnToTitle", typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(UnityEngine.UI.Button));
+            buttonObject.transform.SetParent(gameOverPanel.transform, false);
+            var buttonRect = buttonObject.GetComponent<RectTransform>();
+            buttonRect.anchorMin = buttonRect.anchorMax = new Vector2(.68f, .38f);
+            buttonRect.sizeDelta = new Vector2(360, 90);
+            buttonObject.GetComponent<UnityEngine.UI.Image>().color = Accent;
+            var button = buttonObject.GetComponent<UnityEngine.UI.Button>();
+            button.targetGraphic = buttonObject.GetComponent<UnityEngine.UI.Image>();
+            button.navigation = new UnityEngine.UI.Navigation { mode = UnityEngine.UI.Navigation.Mode.None };
+            button.onClick.AddListener(ReturnToTitle);
+            var label = ResultLabel("ReturnLabel", Vector2.one * .5f, new Vector2(340, 80), 36);
+            label.transform.SetParent(buttonObject.transform, false);
+            label.rectTransform.anchorMin = label.rectTransform.anchorMax = Vector2.one * .5f;
+            label.rectTransform.anchoredPosition = Vector2.zero;
+            label.text = "타이틀로  [R]"; label.color = Color.black;
+            gameOverPanel.SetActive(false);
+        }
+
+        UnityEngine.UI.Text ResultLabel(string label, Vector2 anchor, Vector2 size, int fontSize)
+        {
+            var text = Instantiate(healthText, gameOverPanel.transform);
+            text.name = label; text.color = Accent; text.fontSize = fontSize;
+            text.alignment = TextAnchor.MiddleCenter; text.raycastTarget = false;
+            text.resizeTextForBestFit = true; text.resizeTextMinSize = 20; text.resizeTextMaxSize = fontSize;
+            text.rectTransform.anchorMin = text.rectTransform.anchorMax = anchor;
+            text.rectTransform.anchoredPosition = Vector2.zero; text.rectTransform.sizeDelta = size;
+            return text;
+        }
+
+        void ReturnToTitle()
+        {
+            if (session.Phase.Value != GamePhase.GameOver) return;
+            input.Clear();
+            UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
+            titleStatus.text = $"{GameSession.RankForScore(session.Score.Value)} / {session.Score.Value}점";
+            session.Phase.Value = GamePhase.Title;
         }
 
         async UniTask StartRun()
@@ -116,7 +202,7 @@ namespace MemeDodge
             {
                 if (stages == null)
                 {
-                    var loadedStages = new StageDefinition[3];
+                    var loadedStages = new StageDefinition[4];
                     for (int i = 0; i < loadedStages.Length; i++) loadedStages[i] = await assets.Load<StageDefinition>($"stage-{i}", token);
                     stages = loadedStages;
                 }
@@ -153,18 +239,63 @@ namespace MemeDodge
                 invulnerabilityBlink?.Kill();
                 SetPlayerOpacity(1);
             }
-            int chosen = UnityEngine.Random.Range(0, stages.Length - 1);
-            if (lastStage >= 0 && chosen >= lastStage) chosen++;
-            else if (lastStage < 0) chosen = UnityEngine.Random.Range(0, stages.Length);
+            int chosen;
+            if (testStageNumber >= 0)
+            {
+                chosen = Mathf.Clamp(testStageNumber, 0, stages.Length - 1);
+                if (chosen != testStageNumber)
+                    Debug.LogWarning($"Test stage {testStageNumber} does not exist. Using stage {chosen}.", this);
+            }
+            else
+            {
+                chosen = UnityEngine.Random.Range(0, stages.Length - 1);
+                if (lastStage >= 0 && chosen >= lastStage) chosen++;
+                else if (lastStage < 0) chosen = 0;
+            }
             lastStage = chosen;
             var stage = stages[chosen];
             if (stageLayout != null) { stageLayout.SetActive(false); Destroy(stageLayout); }
             if (defaultPlatforms != null)
                 foreach (var platform in defaultPlatforms) if (platform != null) platform.SetActive(stage.layoutPrefab == null);
             if (stage.layoutPrefab != null) stageLayout = Instantiate(stage.layoutPrefab, transform);
+            if (stageLayout != null)
+            {
+                foreach (var danger in stageLayout.GetComponentsInChildren<Danger>(true)) danger.Configure(this);
+            }
             stageText.text = $"STAGE {session.ClearedStages.Value + 1}  /  {stage.title}";
             messageText.text = stage.instruction;
             session.Phase.Value = GamePhase.Playing;
+            float stageDuration = stage.duration;
+            var gamst = stageLayout == null ? null : stageLayout.GetComponent<GamstStage>();
+            var bringL = stageLayout == null ? null : stageLayout.GetComponent<BringLStage>();
+            var sixSeven = stageLayout == null ? null : stageLayout.GetComponent<SixSevenStage>();
+            var geoje = stageLayout == null ? null : stageLayout.GetComponent<GeojeStage>();
+            if (gamst != null)
+            {
+                foreach (var director in stageLayout.GetComponentsInChildren<UnityEngine.Playables.PlayableDirector>(true)) director.Stop();
+                gamst.Begin(this);
+                stageDuration = gamst.Duration;
+            }
+            else if (bringL != null)
+            {
+                foreach (var director in stageLayout.GetComponentsInChildren<UnityEngine.Playables.PlayableDirector>(true)) director.Stop();
+                bringL.Begin(this);
+                stageDuration = bringL.Duration;
+            }
+            else if (sixSeven != null)
+            {
+                foreach (var director in stageLayout.GetComponentsInChildren<UnityEngine.Playables.PlayableDirector>(true)) director.Stop();
+                sixSeven.Begin(this);
+                stageDuration = sixSeven.Duration;
+            }
+            else if (geoje != null)
+            {
+                geoje.Begin(this);
+                stageDuration = geoje.Duration;
+            }
+            else if (stageLayout != null)
+                foreach (var director in stageLayout.GetComponentsInChildren<UnityEngine.Playables.PlayableDirector>(true))
+                    if (director.playableAsset != null) stageDuration = Mathf.Max(stageDuration, (float)director.duration);
             float elapsed = 0;
             // Legacy automatic obstacles are disabled while stages are rebuilt.
             // float nextAttack = .8f;
@@ -174,18 +305,19 @@ namespace MemeDodge
                 token.ThrowIfCancellationRequested();
                 elapsed += Time.deltaTime;
                 session.AdvanceScore(Time.deltaTime);
-                progress.value = Mathf.Clamp01(elapsed / stage.duration);
-                timerText.text = $"{Mathf.Max(0, Mathf.CeilToInt(stage.duration - elapsed))}s";
-                if (elapsed >= stage.duration) break;
+                progress.value = Mathf.Clamp01(elapsed / stageDuration);
+                timerText.text = $"{Mathf.Max(0, Mathf.CeilToInt(stageDuration - elapsed))}s";
+                if (elapsed >= stageDuration && (gamst == null || gamst.Completed) && (bringL == null || bringL.Completed)
+                    && (sixSeven == null || sixSeven.Completed) && (geoje == null || geoje.Completed)) break;
                 // if (elapsed >= nextAttack)
                 // {
                 //     Attack(stage, stageToken).Forget(error => { if (error is not OperationCanceledException) Debug.LogException(error); });
                 //     nextAttack += stage.attackInterval;
                 // }
-                if (player.transform.position.y < -5) HitPlayer();
                 await UniTask.Yield(PlayerLoopTiming.Update, token);
             }
             stageCancellation.Cancel();
+            StopStageTimeline();
             if (session.ClearStage())
             {
                 ClearDangers();
@@ -341,16 +473,16 @@ namespace MemeDodge
             renderer.sortingOrder = 7;
         }
 
-        public void HitPlayer()
+        public void HitPlayer(bool ignoreInvulnerability = false)
         {
-            if (!session.Damage(Time.time)) return;
+            if (!session.Damage(Time.time, ignoreInvulnerability)) return;
             playerArt.DOKill();
             playerArt.localScale = Vector3.one;
             playerArt.DOPunchScale(new Vector3(.15f, .15f, 0), .25f, 6).SetLink(playerArt.gameObject);
             Camera.main.transform.DOShakePosition(.2f, .15f, 12).SetLink(Camera.main.gameObject);
             invulnerabilityBlink?.Kill();
             invulnerabilityBlink = DOTween.To(() => 1f, SetPlayerOpacity, .2f, .1f)
-                .SetLoops(10, LoopType.Yoyo).SetEase(Ease.Linear).SetLink(playerArt.gameObject)
+                .SetLoops(20, LoopType.Yoyo).SetEase(Ease.Linear).SetLink(playerArt.gameObject)
                 .OnComplete(() => SetPlayerOpacity(1));
         }
 
@@ -368,17 +500,29 @@ namespace MemeDodge
             playerArt.DOPunchScale(new Vector3(.08f, .08f, 0), .22f, 4).SetLink(playerArt.gameObject);
         }
 
-        async UniTask EndRun()
+        void EndRun()
         {
+            StopStageTimeline();
             runCancellation?.Cancel();
             ClearDangers();
-            string result = $"{GameSession.RankForScore(session.Score.Value)}   {session.Score.Value}점";
-            messageText.text = $"GAME OVER   |   {result}";
-            await UniTask.Delay(TimeSpan.FromSeconds(2.5f), cancellationToken: destroyCancellationToken);
+            gameOverFrame = Time.frameCount;
+            resultRank.text = GameSession.RankForScore(session.Score.Value);
+            resultScore.text = $"점수: {session.Score.Value}";
+            hudPanel.SetActive(false);
+            gameOverPanel.transform.SetAsLastSibling();
+            UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
             player.gameObject.SetActive(false);
-            titleStatus.text = $"{result}   /   {session.ClearedStages.Value}단계 클리어";
-            session.Phase.Value = GamePhase.Title;
         }
+        void StopStageTimeline()
+        {
+            if (stageLayout == null) return;
+            stageLayout.GetComponent<GamstStage>()?.Stop();
+            stageLayout.GetComponent<BringLStage>()?.Stop();
+            stageLayout.GetComponent<SixSevenStage>()?.Stop();
+            stageLayout.GetComponent<GeojeStage>()?.Stop();
+            foreach (var director in stageLayout.GetComponentsInChildren<UnityEngine.Playables.PlayableDirector>(true)) director.Stop();
+        }
+
         void ClearDangers()
         {
             foreach (Transform child in dangerRoot)

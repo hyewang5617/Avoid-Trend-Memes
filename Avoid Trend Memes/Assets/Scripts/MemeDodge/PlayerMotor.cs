@@ -68,12 +68,13 @@ namespace MemeDodge
             }
             body.linearVelocity = velocity;
         }
-        void OnDisable()
+        public void ResetAfterTeleport()
         {
             if (body != null) body.linearVelocity = Vector2.zero;
             lastJump = lastGrounded = float.NegativeInfinity;
             jumpsUsed = 0;
             wasGrounded = false;
         }
+        void OnDisable() => ResetAfterTeleport();
     }
 }

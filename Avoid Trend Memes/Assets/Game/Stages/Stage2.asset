@@ -12,11 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd8deac88572be845aa37f331e4528ca, type: 3}
   m_Name: Stage2
   m_EditorClassIdentifier: 
-  title: "\uD55C\uB0A8 \uB9D0\uD22C \uBC08"
-  instruction: "\uB9D0\uD48D\uC120 \uD0C4\uB9C9! \uB0AE\uC740 \uB9D0\uC740 \uC810\uD504,
-    \uB192\uC740 \uB9D0\uC740 \uC544\uB798\uB85C!"
+  title: "67 \uBC08"
+  instruction: "\uC591\uCABD \uBC1C\uD310\uC744 \uC624\uAC00\uBA70 \uC190\uACFC \uB0B4\uB824\uCC0D\uB294
+    6\xB77\uC744 \uD53C\uD558\uC138\uC694!"
   pattern: 2
   layoutPrefab: {fileID: 7847710194829088918, guid: aa3c05c8c7d6cbf408c2da63ace03cca, type: 3}
+  memePrefabs: []
   laserPosition: {x: 0, y: -2.7}
   laserSize: {x: 16, y: 0.12}
   duration: 18

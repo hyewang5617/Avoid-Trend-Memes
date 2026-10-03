@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd8deac88572be845aa37f331e4528ca, type: 3}
   m_Name: Stage0
   m_EditorClassIdentifier: 
-  title: "67 \uBC08"
-  instruction: "6\uACFC 7\uC774 \uB5A8\uC5B4\uC9D1\uB2C8\uB2E4. \uC608\uACE0\uC120\uC744
-    \uBCF4\uACE0 \uD53C\uD558\uC138\uC694!"
+  title: "\uAC10\uC2A4\uD2B8 \uBC08"
+  instruction: "\uACBD\uACE0\uB97C \uBCF4\uACE0 \uD53C\uD558\uC138\uC694! \uBC14\uB2E5
+    \uCDA9\uACA9\uD30C\uB294 \uC810\uD504\uB85C \uB118\uC73C\uC138\uC694."
   pattern: 0
   layoutPrefab: {fileID: 3474168817196134834, guid: eba2c4cc8434f58418458caba7b62c70, type: 3}
   memePrefabs:

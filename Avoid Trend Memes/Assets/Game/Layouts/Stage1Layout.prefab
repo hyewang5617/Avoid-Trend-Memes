@@ -19,7 +19,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &6677686212259450212
 Transform:
   m_ObjectHideFlags: 0
@@ -186,7 +186,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &5302896808802592564
 Transform:
   m_ObjectHideFlags: 0
@@ -343,6 +343,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6027837412224198213}
+  - component: {fileID: 7811039287319796460}
   m_Layer: 0
   m_Name: Stage1Layout
   m_TagString: Untagged
@@ -367,3 +368,34 @@ Transform:
   - {fileID: 6677686212259450212}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7811039287319796460
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6460744410897519010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9fe6fce1c488e5499c96d8ed12de091, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lPrefab: {fileID: 3716929682244707735, guid: c00822f464783a54c86be69e3f7e646e, type: 3}
+  creamPrefab: {fileID: 2900713786396517820, guid: 5cf5b27551cd55245a8691c830c00158, type: 3}
+  crossPrefab: {fileID: 3811077399696923575, guid: a092b348877a058428928a31fd2deed0, type: 3}
+  vegetablePrefab: {fileID: 2962921385333835830, guid: 58e337bf3cd81434aa90ae90c73c6915, type: 3}
+  selfiePrefab: {fileID: 7874760877609795216, guid: 51d28489b42f2c34db562bb37b908ff6, type: 3}
+  warningPrefab: {fileID: 8189421011179669504, guid: 4d3ea1b67a5f7bd4b8be5be8bafe9ada, type: 3}
+  lAudio: {fileID: 8300000, guid: 1f007aaac1a6151479fdd99774e42093, type: 3}
+  creamAudio: {fileID: 8300000, guid: d3e528b106b2a2b4eb1dc94011ae4e0f, type: 3}
+  crossAudio: {fileID: 8300000, guid: 7cbb447cc57baaa4fab525674e168f36, type: 3}
+  vegetableAudio: {fileID: 8300000, guid: f5fd0f8d17482694a9cf561dd2214322, type: 3}
+  selfieAudio: {fileID: 8300000, guid: 4b81f538cd2bdc544b7139e21211ecaf, type: 3}
+  imageSizeMultiplier: 1.5
+  textSizeMultiplier: 1.5
+  executionTimeMultiplier: 1.6
+  warningSeconds: 0.4
+  enableHeyAttacks: 0
+  enableSideLAttacks: 0
+  safeCentre: {x: -2, y: -2}
+  safeSize: {x: 3, y: 3}

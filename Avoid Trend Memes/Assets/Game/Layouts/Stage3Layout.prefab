@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1103020645922476225
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5776761291527599899}
+  - component: {fileID: 5167196700869830058}
+  m_Layer: 0
+  m_Name: Stage3Layout
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5776761291527599899
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1103020645922476225}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5167196700869830058
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1103020645922476225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e15d3fba85aea404a9be7b90c988abc4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  portraitPrefab: {fileID: 4671520072677696840, guid: b5253b56e12d047408a6c4b8a87c1373, type: 3}
+  fullPhrasePrefab: {fileID: 1890293091390899431, guid: 664890aac95386540bc5988e2450bd90, type: 3}
+  geojePrefab: {fileID: 6749232715071323737, guid: 3536f06bb8c06ac4caf9041254916909, type: 3}
+  yahoPrefab: {fileID: 779159130270502942, guid: 72b69235b71af414c91a72d19f9762b7, type: 3}
+  warningPrefab: {fileID: 8189421011179669504, guid: 4d3ea1b67a5f7bd4b8be5be8bafe9ada, type: 3}
+  introAudio: {fileID: 8300000, guid: 7268e25941b9ed24da6e47b7b5a639ae, type: 3}
+  citizensAudio: {fileID: 8300000, guid: 35391625069957144872cf26dc9b6075, type: 3}
+  danceAudio: {fileID: 8300000, guid: 310dc5b7a39428645853a5de5c25a5a9, type: 3}
+  fullPhraseAudio: {fileID: 8300000, guid: cc87832a40f23d84e9c928d9ab79ab5d, type: 3}
+  geojeAudio: {fileID: 8300000, guid: 31ffa9fdc8da51e42bc506f2779e4dac, type: 3}
+  yahoAudio: {fileID: 8300000, guid: 6bda91c2300546a4ba5b6ed529e6a7e3, type: 3}
+  remainingSpace: 2.5
