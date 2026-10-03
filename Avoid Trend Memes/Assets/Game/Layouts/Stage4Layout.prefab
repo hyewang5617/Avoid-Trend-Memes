@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &6399027625653509407
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5383617223443360768}
+  - component: {fileID: 7292330353129710477}
+  m_Layer: 0
+  m_Name: Stage4Layout
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5383617223443360768
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6399027625653509407}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7292330353129710477
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6399027625653509407}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60522c4f0d28b4b4e8cb6862aad95c08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  phraseAudio:
+  - {fileID: 8300000, guid: 74be309582da9b34aa7c1e27bbd1b6ce, type: 3}
+  - {fileID: 8300000, guid: 8f554165309a3b946ab5cc4fcf0f6e62, type: 3}
+  - {fileID: 8300000, guid: 129fd85dbe0885144b165569b0831427, type: 3}
+  - {fileID: 8300000, guid: 7ebdf377311dc2d4d9a43b965460b307, type: 3}
+  - {fileID: 8300000, guid: 6c7e48278f0ba854fbdc8ea5a553f934, type: 3}
+  t1Audio: {fileID: 8300000, guid: 02239a5dab0df9a4b90f88fafdeba42c, type: 3}
+  choirAudio: {fileID: 8300000, guid: 27417ef8c2dcc9841b91fdef6c42a3fb, type: 3}
+  t1Prefab: {fileID: 3937996534654495067, guid: 1001f697593e74442bd2c3a9c2594ad9, type: 3}
+  warningPrefab: {fileID: 8189421011179669504, guid: 4d3ea1b67a5f7bd4b8be5be8bafe9ada, type: 3}
+  warningSeconds: 0.25
+  textHeight: 0.9
+  volleyInterval: 0.5

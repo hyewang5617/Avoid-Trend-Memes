@@ -1,0 +1,24 @@
+if (UnityEditor.EditorApplication.isPlaying) return "Stop Play mode before creating stage assets.";
+var root = new UnityEngine.GameObject("Stage4Layout");
+var stage = root.AddComponent<MemeDodge.JwejweiStage>();
+stage.volleyInterval = .5f;
+stage.t1Prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>("Assets/Game/Memes/5_티원.prefab");
+stage.warningPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>("Assets/Game/Effects/WarningArea.prefab");
+string[] clips = { "5_엄", "5_아예", "5_아뇨아뇨", "5_쥐랄", "5.요이" };
+for (int i = 0; i < clips.Length; i++) stage.phraseAudio[i] = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.AudioClip>("Assets/Audio/" + clips[i] + ".mp3");
+stage.t1Audio = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.AudioClip>("Assets/Audio/5_티원.mp3");
+stage.choirAudio = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.AudioClip>("Assets/Audio/5_합창단.mp3");
+var layout = UnityEditor.PrefabUtility.SaveAsPrefabAsset(root, "Assets/Game/Layouts/Stage4Layout.prefab");
+UnityEngine.Object.DestroyImmediate(root);
+var definition = UnityEditor.AssetDatabase.LoadAssetAtPath<MemeDodge.StageDefinition>("Assets/Game/Stages/Stage4.asset");
+if (definition == null) { definition = UnityEngine.ScriptableObject.CreateInstance<MemeDodge.StageDefinition>(); UnityEditor.AssetDatabase.CreateAsset(definition, "Assets/Game/Stages/Stage4.asset"); }
+definition.title = "줴줴이야 밈";
+definition.instruction = "사방에서 날아오는 텍스트와 커지는 티원을 피하세요!";
+definition.layoutPrefab = layout; definition.duration = layout.GetComponent<MemeDodge.JwejweiStage>().Duration;
+UnityEditor.EditorUtility.SetDirty(definition);
+var settings = UnityEditor.AddressableAssets.AddressableAssetSettingsDefaultObject.Settings;
+var entry = settings.CreateOrMoveEntry(UnityEditor.AssetDatabase.AssetPathToGUID("Assets/Game/Stages/Stage4.asset"), settings.DefaultGroup);
+entry.address = "stage-4"; UnityEditor.EditorUtility.SetDirty(settings);
+UnityEditor.AssetDatabase.SaveAssets();
+return new { duration = definition.duration, layout = layout.name, address = entry.address,
+    colliderPaths = stage == null ? layout.GetComponent<MemeDodge.JwejweiStage>().t1Prefab.GetComponent<UnityEngine.PolygonCollider2D>().pathCount : 0 };

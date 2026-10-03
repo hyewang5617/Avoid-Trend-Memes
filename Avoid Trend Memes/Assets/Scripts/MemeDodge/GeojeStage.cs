@@ -111,9 +111,9 @@ namespace MemeDodge
             music.PlayScheduled(AudioSettings.dspTime + introAudio.length);
             float start = Time.time;
             StartCoroutine(GuidedTriangle(1.65f, .35f, introAudio.length - 2, true));
-            float shotInterval = citizensAudio.length / 3;
+            float shotInterval = citizensAudio.length / 2;
             for (int i = 0; i < 4; i++)
-                for (int shotIndex = 0; shotIndex < 3; shotIndex++)
+                for (int shotIndex = 0; shotIndex < 2; shotIndex++)
                     StartCoroutine(GuidedTriangle(introAudio.length + i * citizensAudio.length + shotIndex * shotInterval,
                         .25f, shotInterval - .25f, false));
             while (Time.time - start < introDuration)

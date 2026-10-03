@@ -101,7 +101,9 @@ namespace MemeDodge
                 if (b != null) b.position = Vector2.Lerp(startB, endB, t);
                 if (bounce > 0)
                 {
-                    var offset = Vector3.up * (Mathf.Abs(Mathf.Sin(t * Mathf.PI * 2)) * bounce);
+                    // Stay level at both ends; make one jump while crossing the centre.
+                    float jumpT = Mathf.Clamp01((t - .35f) / .3f);
+                    var offset = Vector3.up * (4 * jumpT * (1 - jumpT) * bounce);
                     a.position += offset;
                     if (b != null) b.position += offset;
                 }

@@ -272,10 +272,16 @@ namespace MemeDodge
 
             CurrentPanel = 3;
             figure = Figure(lPrefab, "RightEmitter", new Vector2(width * .5f + 4, 0), height * .5f);
-            start = figure.position; destination = new Vector2(width * .25f, 0); next = .5f;
+            start = figure.position; destination = new Vector2(width * .25f, 0); next = warningSeconds + .5f;
+            var emitterBounds = VisualBounds(figure);
+            var emitterWarning = Warning(destination + (Vector2)emitterBounds.center - (Vector2)figure.position, emitterBounds.size);
+            figure.gameObject.SetActive(false);
             yield return Clip(lAudio, time =>
             {
-                figure.position = Vector2.Lerp(start, destination, Mathf.Clamp01(time / .5f));
+                if (time < warningSeconds) return;
+                emitterWarning.gameObject.SetActive(false);
+                figure.gameObject.SetActive(true);
+                figure.position = Vector2.Lerp(start, destination, Mathf.Clamp01((time - warningSeconds) / .5f));
                 if (time < next) return;
                 next += .5f;
                 var bounds = figure.GetComponentInChildren<SpriteRenderer>().bounds;
@@ -400,7 +406,9 @@ namespace MemeDodge
             render.sortingOrder = 10;
             var hit = instance.AddComponent<BoxCollider2D>();
             hit.isTrigger = true; hit.enabled = false;
-            instance.AddComponent<Danger>().Configure(game);
+            var danger = instance.AddComponent<Danger>();
+            danger.Configure(game);
+            danger.ConfigureSafeZone(new Rect(safeCentre - safeSize * .5f, safeSize));
             list.Add(instance);
         }
 

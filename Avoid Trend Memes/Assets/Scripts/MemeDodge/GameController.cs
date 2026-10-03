@@ -27,6 +27,7 @@ namespace MemeDodge
         [Header("Stage testing")]
         [Tooltip("-1: normal progression. 0: Gamst. Non-negative numbers repeat only that stage.")]
         public int testStageNumber = 0;
+        public bool enableStageTesting = false;
         [Tooltip("Below this world Y, lose one HP and return to a safe surface.")]
         public float fallY = -5;
         GameSession session;
@@ -47,6 +48,11 @@ namespace MemeDodge
         GameObject gameOverPanel;
         UnityEngine.UI.Text resultRank, resultScore;
         int gameOverFrame;
+        GameObject modePanel;
+        GameObject practicePanel;
+        enum RunMode { Normal, Infinite, Practice }
+        RunMode runMode;
+        int practiceStage;
 
         [Inject] public void Construct(GameSession state, GameAssets resources) { session = state; assets = resources; }
 
@@ -65,11 +71,12 @@ namespace MemeDodge
             scoreText.fontSize = 26;
             scoreText.raycastTarget = false;
             BuildGameOverUI();
+            BuildModeUI();
             subscriptions.Add(session.Score.Subscribe(value => scoreText.text = $"SCORE  {value}"));
             if (sound != null) { sound.Stop(); sound.playOnAwake = false; sound.mute = true; }
             subscriptions.Add(session.Health.Subscribe(value => healthText.text = $"HP  {new string('●', value)}{new string('○', GameSession.MaxHealth - value)}"));
             subscriptions.Add(session.Phase.Subscribe(ShowPhase));
-            startButton.onClick.AddListener(() => StartRun().Forget(Debug.LogException));
+            startButton.onClick.AddListener(ShowModeSelection);
             player.Jumped += OnJump;
             player.Landed += OnLand;
             player.enabled = false;
@@ -125,7 +132,7 @@ namespace MemeDodge
             player.enabled = canMove;
             input.enabled = canMove;
             if (!canMove) input.Clear();
-            if (gameOverPanel != null) gameOverPanel.SetActive(phase == GamePhase.GameOver);
+            if (gameOverPanel != null) gameOverPanel.SetActive(phase == GamePhase.GameOver || phase == GamePhase.Victory);
             if (phase == GamePhase.GameOver) EndRun();
         }
 
@@ -133,12 +140,13 @@ namespace MemeDodge
         {
             var keyboard = UnityEngine.InputSystem.Keyboard.current;
             if (session == null || !Application.isFocused || keyboard == null) return;
-            if (session.Phase.Value == GamePhase.GameOver && Time.frameCount > gameOverFrame && keyboard.rKey.wasPressedThisFrame) ReturnToTitle();
+            if ((session.Phase.Value == GamePhase.GameOver || session.Phase.Value == GamePhase.Victory)
+                && Time.frameCount > gameOverFrame && keyboard.rKey.wasPressedThisFrame) ReturnToTitle();
             else if (session.Phase.Value == GamePhase.Title && !starting && keyboard.spaceKey.wasPressedThisFrame)
             {
                 input.Clear();
                 UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
-                StartRun().Forget(Debug.LogException);
+                ShowModeSelection();
             }
         }
 
@@ -182,11 +190,92 @@ namespace MemeDodge
 
         void ReturnToTitle()
         {
-            if (session.Phase.Value != GamePhase.GameOver) return;
+            if (session.Phase.Value != GamePhase.GameOver && session.Phase.Value != GamePhase.Victory) return;
             input.Clear();
             UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
             titleStatus.text = $"{GameSession.RankForScore(session.Score.Value)} / {session.Score.Value}점";
             session.Phase.Value = GamePhase.Title;
+        }
+
+        void BuildModeUI()
+        {
+            modePanel = new GameObject("ModeSelection", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+            modePanel.transform.SetParent(titlePanel.transform.parent, false);
+            var rect = modePanel.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one; rect.sizeDelta = Vector2.zero;
+            modePanel.GetComponent<UnityEngine.UI.Image>().color = Color.black;
+            var heading = ResultLabel("ChooseMode", new Vector2(.5f, .75f), new Vector2(600, 110), 52);
+            heading.transform.SetParent(modePanel.transform, false); heading.text = "모드를 선택하세요";
+            ModeButton("NormalMode", "일반 모드", new Vector2(.2f, .48f), modePanel.transform, () => BeginMode(RunMode.Normal));
+            ModeButton("InfiniteMode", "무한 모드", new Vector2(.5f, .48f), modePanel.transform, () => BeginMode(RunMode.Infinite));
+            ModeButton("PracticeMode", "연습 모드", new Vector2(.8f, .48f), modePanel.transform, () =>
+            {
+                modePanel.SetActive(false); practicePanel.SetActive(true); practicePanel.transform.SetAsLastSibling();
+                UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
+            });
+            practicePanel = new GameObject("PracticeStageSelection", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+            practicePanel.transform.SetParent(titlePanel.transform.parent, false);
+            var practiceRect = practicePanel.GetComponent<RectTransform>();
+            practiceRect.anchorMin = Vector2.zero; practiceRect.anchorMax = Vector2.one; practiceRect.sizeDelta = Vector2.zero;
+            practicePanel.GetComponent<UnityEngine.UI.Image>().color = Color.black;
+            var practiceHeading = ResultLabel("ChoosePracticeStage", new Vector2(.5f, .82f), new Vector2(650, 110), 48);
+            practiceHeading.transform.SetParent(practicePanel.transform, false); practiceHeading.text = "연습할 스테이지를 선택하세요";
+            string[] stageNames = { "감스트", "L을 가져가", "67", "거제야호", "줴줴이야" };
+            for (int i = 0; i < stageNames.Length; i++)
+            {
+                int index = i;
+                Vector2 anchor = i < 3 ? new Vector2(.2f + .3f * i, .57f) : new Vector2(.35f + .3f * (i - 3), .3f);
+                ModeButton("PracticeStage" + (i + 1), $"Stage {i + 1}\n{stageNames[i]}", anchor, practicePanel.transform,
+                    () => { practiceStage = index; BeginMode(RunMode.Practice); });
+            }
+            practicePanel.SetActive(false);
+            modePanel.SetActive(false);
+        }
+
+        void ModeButton(string name, string caption, Vector2 anchor, Transform parent, Action selected)
+        {
+            var item = new GameObject(name, typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(UnityEngine.UI.Button));
+            item.transform.SetParent(parent, false);
+            var rect = item.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = anchor; rect.sizeDelta = new Vector2(300, 130);
+            var image = item.GetComponent<UnityEngine.UI.Image>(); image.color = Accent;
+            var button = item.GetComponent<UnityEngine.UI.Button>(); button.targetGraphic = image;
+            button.navigation = new UnityEngine.UI.Navigation { mode = UnityEngine.UI.Navigation.Mode.None };
+            button.onClick.AddListener(() =>
+            {
+                if (session.Phase.Value != GamePhase.Title || starting) return;
+                selected();
+            });
+            var label = ResultLabel(name + "Label", Vector2.one * .5f, new Vector2(280, 110), 38);
+            label.transform.SetParent(item.transform, false); label.text = caption; label.color = Color.black;
+        }
+
+        void BeginMode(RunMode mode)
+        {
+            runMode = mode; modePanel.SetActive(false); practicePanel.SetActive(false); input.Clear();
+            UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
+            StartRun().Forget(Debug.LogException);
+        }
+
+        void ShowModeSelection()
+        {
+            if (session.Phase.Value != GamePhase.Title || starting) return;
+            if (enableStageTesting) { StartRun().Forget(Debug.LogException); return; }
+            practicePanel.SetActive(false); modePanel.SetActive(true); modePanel.transform.SetAsLastSibling();
+            UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
+        }
+
+        void ShowVictory()
+        {
+            session.Phase.Value = GamePhase.Victory;
+            gameOverFrame = Time.frameCount;
+            player.gameObject.SetActive(false); hudPanel.SetActive(false);
+            resultRank.text = runMode == RunMode.Practice ? "연습\n완료" : "CLEAR!";
+            resultScore.rectTransform.sizeDelta = new Vector2(480, 220);
+            resultScore.text = runMode == RunMode.Practice ? $"잃은 목숨: {session.LostLives}"
+                : $"축하합니다!\n무한모드가 열렸습니다!\n점수: {session.Score.Value}";
+            gameOverPanel.transform.SetAsLastSibling();
+            UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
         }
 
         async UniTask StartRun()
@@ -196,13 +285,13 @@ namespace MemeDodge
             runCancellation?.Dispose();
             runCancellation = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
             var token = runCancellation.Token;
-            session.NewRun();
+            session.NewRun(runMode == RunMode.Practice);
             titleStatus.text = "밈 불러오는 중…";
             try
             {
                 if (stages == null)
                 {
-                    var loadedStages = new StageDefinition[4];
+                    var loadedStages = new StageDefinition[5];
                     for (int i = 0; i < loadedStages.Length; i++) loadedStages[i] = await assets.Load<StageDefinition>($"stage-{i}", token);
                     stages = loadedStages;
                 }
@@ -240,17 +329,20 @@ namespace MemeDodge
                 SetPlayerOpacity(1);
             }
             int chosen;
-            if (testStageNumber >= 0)
+            if (enableStageTesting && testStageNumber >= 0)
             {
                 chosen = Mathf.Clamp(testStageNumber, 0, stages.Length - 1);
                 if (chosen != testStageNumber)
                     Debug.LogWarning($"Test stage {testStageNumber} does not exist. Using stage {chosen}.", this);
             }
+            else if (runMode == RunMode.Practice)
+                chosen = Mathf.Clamp(practiceStage, 0, stages.Length - 1);
+            else if (runMode == RunMode.Normal)
+                chosen = Mathf.Clamp(session.ClearedStages.Value, 0, stages.Length - 1);
             else
             {
-                chosen = UnityEngine.Random.Range(0, stages.Length - 1);
+                chosen = UnityEngine.Random.Range(0, lastStage < 0 ? stages.Length : stages.Length - 1);
                 if (lastStage >= 0 && chosen >= lastStage) chosen++;
-                else if (lastStage < 0) chosen = 0;
             }
             lastStage = chosen;
             var stage = stages[chosen];
@@ -262,7 +354,7 @@ namespace MemeDodge
             {
                 foreach (var danger in stageLayout.GetComponentsInChildren<Danger>(true)) danger.Configure(this);
             }
-            stageText.text = $"STAGE {session.ClearedStages.Value + 1}  /  {stage.title}";
+            stageText.text = $"STAGE {(runMode == RunMode.Practice ? chosen + 1 : session.ClearedStages.Value + 1)}  /  {stage.title}";
             messageText.text = stage.instruction;
             session.Phase.Value = GamePhase.Playing;
             float stageDuration = stage.duration;
@@ -270,6 +362,7 @@ namespace MemeDodge
             var bringL = stageLayout == null ? null : stageLayout.GetComponent<BringLStage>();
             var sixSeven = stageLayout == null ? null : stageLayout.GetComponent<SixSevenStage>();
             var geoje = stageLayout == null ? null : stageLayout.GetComponent<GeojeStage>();
+            var jwejwei = stageLayout == null ? null : stageLayout.GetComponent<JwejweiStage>();
             if (gamst != null)
             {
                 foreach (var director in stageLayout.GetComponentsInChildren<UnityEngine.Playables.PlayableDirector>(true)) director.Stop();
@@ -293,6 +386,11 @@ namespace MemeDodge
                 geoje.Begin(this);
                 stageDuration = geoje.Duration;
             }
+            else if (jwejwei != null)
+            {
+                jwejwei.Begin(this);
+                stageDuration = jwejwei.Duration;
+            }
             else if (stageLayout != null)
                 foreach (var director in stageLayout.GetComponentsInChildren<UnityEngine.Playables.PlayableDirector>(true))
                     if (director.playableAsset != null) stageDuration = Mathf.Max(stageDuration, (float)director.duration);
@@ -308,7 +406,8 @@ namespace MemeDodge
                 progress.value = Mathf.Clamp01(elapsed / stageDuration);
                 timerText.text = $"{Mathf.Max(0, Mathf.CeilToInt(stageDuration - elapsed))}s";
                 if (elapsed >= stageDuration && (gamst == null || gamst.Completed) && (bringL == null || bringL.Completed)
-                    && (sixSeven == null || sixSeven.Completed) && (geoje == null || geoje.Completed)) break;
+                    && (sixSeven == null || sixSeven.Completed) && (geoje == null || geoje.Completed)
+                    && (jwejwei == null || jwejwei.Completed)) break;
                 // if (elapsed >= nextAttack)
                 // {
                 //     Attack(stage, stageToken).Forget(error => { if (error is not OperationCanceledException) Debug.LogException(error); });
@@ -321,6 +420,11 @@ namespace MemeDodge
             if (session.ClearStage())
             {
                 ClearDangers();
+                if (runMode == RunMode.Practice || runMode == RunMode.Normal && !enableStageTesting && session.ClearedStages.Value >= stages.Length)
+                {
+                    ShowVictory();
+                    return;
+                }
                 messageText.text = "단계 클리어! 더블 점프로 힐팩을 먹으세요 (+1 HP)";
                 SpawnHealthPack();
             }
@@ -343,7 +447,15 @@ namespace MemeDodge
             healthPickup = CreateBox("HealthPack", new Vector2(UnityEngine.Random.Range(-7f, 7f), UnityEngine.Random.Range(minY, maxY)), new Vector2(.6f, .6f), 1);
             healthPickup.transform.SetParent(transform, true);
             healthPickup.GetComponent<SpriteRenderer>().color = Color.black;
-            AddWorldLabel(healthPickup.transform, "+", new Vector2(.6f, .6f));
+            for (int i = 0; i < 2; i++)
+            {
+                var bar = new GameObject(i == 0 ? "CrossHorizontal" : "CrossVertical");
+                bar.transform.SetParent(healthPickup.transform, false);
+                bar.transform.localPosition = Vector3.zero;
+                bar.transform.localScale = i == 0 ? new Vector3(.65f, .12f, 1) : new Vector3(.12f, .65f, 1);
+                var render = bar.AddComponent<SpriteRenderer>();
+                render.sprite = solidSprite; render.color = Accent; render.sortingOrder = 7;
+            }
             var trigger = healthPickup.AddComponent<BoxCollider2D>();
             trigger.isTrigger = true;
             healthPickup.AddComponent<HealthPickup>().Configure(this);
@@ -507,6 +619,7 @@ namespace MemeDodge
             ClearDangers();
             gameOverFrame = Time.frameCount;
             resultRank.text = GameSession.RankForScore(session.Score.Value);
+            resultScore.rectTransform.sizeDelta = new Vector2(430, 100);
             resultScore.text = $"점수: {session.Score.Value}";
             hudPanel.SetActive(false);
             gameOverPanel.transform.SetAsLastSibling();
@@ -520,6 +633,7 @@ namespace MemeDodge
             stageLayout.GetComponent<BringLStage>()?.Stop();
             stageLayout.GetComponent<SixSevenStage>()?.Stop();
             stageLayout.GetComponent<GeojeStage>()?.Stop();
+            stageLayout.GetComponent<JwejweiStage>()?.Stop();
             foreach (var director in stageLayout.GetComponentsInChildren<UnityEngine.Playables.PlayableDirector>(true)) director.Stop();
         }
 

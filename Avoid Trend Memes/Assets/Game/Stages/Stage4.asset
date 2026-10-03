@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd8deac88572be845aa37f331e4528ca, type: 3}
+  m_Name: Stage4
+  m_EditorClassIdentifier: 
+  title: "\uC934\uC934\uC774\uC57C \uBC08"
+  instruction: "\uC0AC\uBC29\uC5D0\uC11C \uB0A0\uC544\uC624\uB294 \uD14D\uC2A4\uD2B8\uC640
+    \uCEE4\uC9C0\uB294 \uD2F0\uC6D0\uC744 \uD53C\uD558\uC138\uC694!"
+  pattern: 0
+  layoutPrefab: {fileID: 6399027625653509407, guid: 73675330d16074049b1cd0327e50de4c, type: 3}
+  memePrefabs: []
+  laserPosition: {x: 0, y: -2.7}
+  laserSize: {x: 16, y: 0.12}
+  duration: 15.839999
+  attackInterval: 1.6
+  warningDuration: 0.8
+  projectileSpeed: 4

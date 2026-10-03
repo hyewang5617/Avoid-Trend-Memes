@@ -3,7 +3,7 @@ using R3;
 
 namespace MemeDodge
 {
-    public enum GamePhase { Title, Loading, Playing, Reward, GameOver }
+    public enum GamePhase { Title, Loading, Playing, Reward, GameOver, Victory }
 
     public sealed class GameSession : IDisposable
     {
@@ -14,6 +14,8 @@ namespace MemeDodge
         public readonly ReactiveProperty<GamePhase> Phase = new(GamePhase.Title);
         float invulnerableUntil;
         double scoreTenths;
+        public bool PracticeMode { get; private set; }
+        public int LostLives { get; private set; }
 
         public static string RankForScore(int score) => score >= 1000 ? "SS" : score >= 800 ? "S" : score >= 600 ? "A" : score >= 400 ? "B" : score >= 300 ? "C" : score >= 200 ? "D" : score >= 100 ? "E" : "F";
 
@@ -27,8 +29,10 @@ namespace MemeDodge
             Score.Value += earned;
         }
 
-        public void NewRun()
+        public void NewRun(bool practiceMode = false)
         {
+            PracticeMode = practiceMode;
+            LostLives = 0;
             Health.Value = MaxHealth;
             ClearedStages.Value = 0;
             Score.Value = 0;
@@ -42,8 +46,9 @@ namespace MemeDodge
             bool canDamage = Phase.Value == GamePhase.Playing || ignoreInvulnerability && Phase.Value == GamePhase.Reward;
             if (!canDamage || !ignoreInvulnerability && time < invulnerableUntil) return false;
             invulnerableUntil = time + 2f;
+            LostLives++;
             Health.Value = Math.Max(0, Health.Value - 1);
-            if (Health.Value == 0) Phase.Value = GamePhase.GameOver;
+            if (Health.Value == 0 && !PracticeMode) Phase.Value = GamePhase.GameOver;
             return true;
         }
 
