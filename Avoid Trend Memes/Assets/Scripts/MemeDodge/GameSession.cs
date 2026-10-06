@@ -15,6 +15,7 @@ namespace MemeDodge
         float invulnerableUntil;
         double scoreTenths;
         public bool PracticeMode { get; private set; }
+        public bool DeveloperMode { get; set; }
         public int LostLives { get; private set; }
 
         public static string RankForScore(int score) => score >= 1000 ? "SS" : score >= 800 ? "S" : score >= 600 ? "A" : score >= 400 ? "B" : score >= 300 ? "C" : score >= 200 ? "D" : score >= 100 ? "E" : "F";
@@ -48,7 +49,7 @@ namespace MemeDodge
             invulnerableUntil = time + 2f;
             LostLives++;
             Health.Value = Math.Max(0, Health.Value - 1);
-            if (Health.Value == 0 && !PracticeMode) Phase.Value = GamePhase.GameOver;
+            if (Health.Value == 0 && !PracticeMode && !DeveloperMode) Phase.Value = GamePhase.GameOver;
             return true;
         }
 

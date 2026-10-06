@@ -24,6 +24,8 @@ namespace MemeDodge
         public Font worldFont;
         public Material lineMaterial;
         public AudioSource sound;
+        public AudioClip menuMusic;
+        AudioSource menuMusicSource;
         [Header("Stage testing")]
         [Tooltip("-1: normal progression. 0: Gamst. Non-negative numbers repeat only that stage.")]
         public int testStageNumber = 0;
@@ -53,6 +55,11 @@ namespace MemeDodge
         enum RunMode { Normal, Infinite, Practice }
         RunMode runMode;
         int practiceStage;
+        readonly List<UnityEngine.UI.Button> modeButtons = new();
+        readonly List<UnityEngine.UI.Button> practiceButtons = new();
+        readonly List<UnityEngine.UI.Button> titleButtons = new();
+        int modeSelection, practiceSelection, titleSelection;
+        UnityEngine.UI.Toggle developerToggle;
 
         [Inject] public void Construct(GameSession state, GameAssets resources) { session = state; assets = resources; }
 
@@ -72,6 +79,11 @@ namespace MemeDodge
             scoreText.raycastTarget = false;
             BuildGameOverUI();
             BuildModeUI();
+            BuildDeveloperToggle();
+            BuildTitleUI();
+            menuMusicSource = gameObject.AddComponent<AudioSource>();
+            menuMusicSource.playOnAwake = false; menuMusicSource.loop = true;
+            menuMusicSource.spatialBlend = 0; menuMusicSource.clip = menuMusic;
             subscriptions.Add(session.Score.Subscribe(value => scoreText.text = $"SCORE  {value}"));
             if (sound != null) { sound.Stop(); sound.playOnAwake = false; sound.mute = true; }
             subscriptions.Add(session.Health.Subscribe(value => healthText.text = $"HP  {new string('●', value)}{new string('○', GameSession.MaxHealth - value)}"));
@@ -124,10 +136,17 @@ namespace MemeDodge
 
         void ShowPhase(GamePhase phase)
         {
+            bool menuVisible = phase != GamePhase.Playing && phase != GamePhase.Reward;
+            if (menuMusicSource != null && menuMusic != null)
+            {
+                if (menuVisible && !menuMusicSource.isPlaying) menuMusicSource.Play();
+                else if (!menuVisible && menuMusicSource.isPlaying) menuMusicSource.Stop();
+            }
             titlePanel.SetActive(phase == GamePhase.Title || phase == GamePhase.Loading && starting);
             hudPanel.SetActive(phase != GamePhase.Title);
             rewardPanel.SetActive(false);
             startButton.interactable = phase == GamePhase.Title && !starting;
+            if (phase == GamePhase.Title) SelectMenu(titleButtons, 0);
             bool canMove = phase == GamePhase.Playing || phase == GamePhase.Reward;
             player.enabled = canMove;
             input.enabled = canMove;
@@ -140,13 +159,41 @@ namespace MemeDodge
         {
             var keyboard = UnityEngine.InputSystem.Keyboard.current;
             if (session == null || !Application.isFocused || keyboard == null) return;
+            if (keyboard.rightBracketKey.wasPressedThisFrame)
+            {
+                developerToggle.gameObject.SetActive(true);
+                developerToggle.isOn = !developerToggle.isOn;
+            }
             if ((session.Phase.Value == GamePhase.GameOver || session.Phase.Value == GamePhase.Victory)
                 && Time.frameCount > gameOverFrame && keyboard.rKey.wasPressedThisFrame) ReturnToTitle();
-            else if (session.Phase.Value == GamePhase.Title && !starting && keyboard.spaceKey.wasPressedThisFrame)
+            else if (session.Phase.Value == GamePhase.Title && !starting)
             {
-                input.Clear();
-                UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
-                ShowModeSelection();
+                var buttons = practicePanel.activeSelf ? practiceButtons : modePanel.activeSelf ? modeButtons : titleButtons;
+                if (buttons != null)
+                {
+                    int index = buttons == practiceButtons ? practiceSelection : buttons == modeButtons ? modeSelection : titleSelection;
+                    int move = buttons == titleButtons
+                        ? (keyboard.downArrowKey.wasPressedThisFrame ? 1 : 0) - (keyboard.upArrowKey.wasPressedThisFrame ? 1 : 0)
+                        : (keyboard.rightArrowKey.wasPressedThisFrame ? 1 : 0) - (keyboard.leftArrowKey.wasPressedThisFrame ? 1 : 0);
+                    if (move != 0) SelectMenu(buttons, (index + move + buttons.Count) % buttons.Count);
+                    if (buttons == practiceButtons)
+                    {
+                        int vertical = (keyboard.upArrowKey.wasPressedThisFrame ? 1 : 0) - (keyboard.downArrowKey.wasPressedThisFrame ? 1 : 0);
+                        if (vertical != 0) SelectPracticeRow(vertical);
+                    }
+                    if (keyboard.spaceKey.wasPressedThisFrame)
+                    {
+                        input.Clear();
+                        index = buttons == practiceButtons ? practiceSelection : buttons == modeButtons ? modeSelection : titleSelection;
+                        buttons[index].onClick.Invoke();
+                    }
+                }
+                else if (keyboard.spaceKey.wasPressedThisFrame)
+                {
+                    input.Clear();
+                    UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
+                    ShowModeSelection();
+                }
             }
         }
 
@@ -175,6 +222,44 @@ namespace MemeDodge
             label.rectTransform.anchoredPosition = Vector2.zero;
             label.text = "타이틀로  [R]"; label.color = Color.black;
             gameOverPanel.SetActive(false);
+        }
+
+        void BuildTitleUI()
+        {
+            titleButtons.Add(startButton);
+            startButton.transition = UnityEngine.UI.Selectable.Transition.None;
+            startButton.navigation = new UnityEngine.UI.Navigation { mode = UnityEngine.UI.Navigation.Mode.None };
+            var startOutline = startButton.GetComponent<UnityEngine.UI.Outline>();
+            if (startOutline == null) startOutline = startButton.gameObject.AddComponent<UnityEngine.UI.Outline>();
+            startOutline.effectColor = Accent; startOutline.effectDistance = new Vector2(2, -2);
+            var item = new GameObject("QuitGame", typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(UnityEngine.UI.Button));
+            item.transform.SetParent(titlePanel.transform, false);
+            var rect = item.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = new Vector2(.5f, .19f);
+            rect.sizeDelta = startButton.GetComponent<RectTransform>().sizeDelta * .7f;
+            var image = item.GetComponent<UnityEngine.UI.Image>();
+            var quit = item.GetComponent<UnityEngine.UI.Button>(); quit.targetGraphic = image;
+            quit.transition = UnityEngine.UI.Selectable.Transition.None;
+            quit.navigation = new UnityEngine.UI.Navigation { mode = UnityEngine.UI.Navigation.Mode.None };
+            var outline = item.AddComponent<UnityEngine.UI.Outline>();
+            outline.effectColor = Accent; outline.effectDistance = new Vector2(2, -2);
+            quit.onClick.AddListener(QuitGame); titleButtons.Add(quit);
+            var label = ResultLabel("QuitLabel", Vector2.one * .5f, rect.sizeDelta - new Vector2(12, 12), 30);
+            label.transform.SetParent(item.transform, false); label.text = "게임 종료";
+            var credit = ResultLabel("CreatorCredit", new Vector2(.5f, .055f), new Vector2(500, 35), 20);
+            credit.transform.SetParent(titlePanel.transform, false);
+            credit.text = "made by hyewang5617";
+            SelectMenu(titleButtons, 0);
+        }
+
+        void QuitGame()
+        {
+            SelectMenu(titleButtons, 1);
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
         }
 
         UnityEngine.UI.Text ResultLabel(string label, Vector2 anchor, Vector2 size, int fontSize)
@@ -211,6 +296,7 @@ namespace MemeDodge
             ModeButton("PracticeMode", "연습 모드", new Vector2(.8f, .48f), modePanel.transform, () =>
             {
                 modePanel.SetActive(false); practicePanel.SetActive(true); practicePanel.transform.SetAsLastSibling();
+                SelectMenu(practiceButtons, 0);
                 UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
             });
             practicePanel = new GameObject("PracticeStageSelection", typeof(RectTransform), typeof(UnityEngine.UI.Image));
@@ -228,8 +314,42 @@ namespace MemeDodge
                 ModeButton("PracticeStage" + (i + 1), $"Stage {i + 1}\n{stageNames[i]}", anchor, practicePanel.transform,
                     () => { practiceStage = index; BeginMode(RunMode.Practice); });
             }
+            ModeButton("PracticeBack", "뒤로가기", new Vector2(.5f, .1f), practicePanel.transform, ShowModeSelection);
+            var back = practiceButtons[practiceButtons.Count - 1];
+            back.GetComponent<RectTransform>().sizeDelta = new Vector2(180, 55);
+            var backLabel = back.GetComponentInChildren<UnityEngine.UI.Text>();
+            backLabel.rectTransform.sizeDelta = new Vector2(160, 45); backLabel.resizeTextMaxSize = 26;
             practicePanel.SetActive(false);
             modePanel.SetActive(false);
+            SelectMenu(modeButtons, 0); SelectMenu(practiceButtons, 0);
+        }
+
+        void BuildDeveloperToggle()
+        {
+            var item = new GameObject("DeveloperMode", typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(UnityEngine.UI.Toggle));
+            item.transform.SetParent(modePanel.transform, false);
+            var rect = item.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = new Vector2(0, 1); rect.pivot = new Vector2(0, 1);
+            rect.anchoredPosition = new Vector2(20, -20); rect.sizeDelta = new Vector2(26, 26);
+            var background = item.GetComponent<UnityEngine.UI.Image>(); background.color = Color.black;
+            var outline = item.AddComponent<UnityEngine.UI.Outline>();
+            outline.effectColor = Accent; outline.effectDistance = new Vector2(1.5f, -1.5f);
+            var check = new GameObject("Check", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+            check.transform.SetParent(item.transform, false);
+            var checkRect = check.GetComponent<RectTransform>();
+            checkRect.anchorMin = checkRect.anchorMax = Vector2.one * .5f; checkRect.sizeDelta = new Vector2(16, 16);
+            var mark = check.GetComponent<UnityEngine.UI.Image>(); mark.color = Accent; mark.raycastTarget = false;
+            developerToggle = item.GetComponent<UnityEngine.UI.Toggle>();
+            developerToggle.targetGraphic = background; developerToggle.graphic = mark;
+            developerToggle.transition = UnityEngine.UI.Selectable.Transition.None;
+            developerToggle.navigation = new UnityEngine.UI.Navigation { mode = UnityEngine.UI.Navigation.Mode.None };
+            developerToggle.isOn = session.DeveloperMode;
+            developerToggle.onValueChanged.AddListener(value =>
+            {
+                session.DeveloperMode = value;
+                UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
+            });
+            item.SetActive(false);
         }
 
         void ModeButton(string name, string caption, Vector2 anchor, Transform parent, Action selected)
@@ -240,14 +360,56 @@ namespace MemeDodge
             rect.anchorMin = rect.anchorMax = anchor; rect.sizeDelta = new Vector2(300, 130);
             var image = item.GetComponent<UnityEngine.UI.Image>(); image.color = Accent;
             var button = item.GetComponent<UnityEngine.UI.Button>(); button.targetGraphic = image;
+            button.transition = UnityEngine.UI.Selectable.Transition.None;
+            var outline = item.AddComponent<UnityEngine.UI.Outline>();
+            outline.effectColor = Accent; outline.effectDistance = new Vector2(2, -2);
+            var buttons = parent == modePanel.transform ? modeButtons : practiceButtons;
+            int index = buttons.Count; buttons.Add(button);
             button.navigation = new UnityEngine.UI.Navigation { mode = UnityEngine.UI.Navigation.Mode.None };
             button.onClick.AddListener(() =>
             {
                 if (session.Phase.Value != GamePhase.Title || starting) return;
+                SelectMenu(buttons, index);
                 selected();
             });
             var label = ResultLabel(name + "Label", Vector2.one * .5f, new Vector2(280, 110), 38);
             label.transform.SetParent(item.transform, false); label.text = caption; label.color = Color.black;
+        }
+
+        void SelectMenu(List<UnityEngine.UI.Button> buttons, int index)
+        {
+            if (buttons == modeButtons) modeSelection = index;
+            else if (buttons == practiceButtons) practiceSelection = index;
+            else titleSelection = index;
+            for (int i = 0; i < buttons.Count; i++)
+            {
+                bool selected = i == index;
+                buttons[i].GetComponent<UnityEngine.UI.Image>().color = selected ? Accent : Color.black;
+                buttons[i].GetComponent<UnityEngine.UI.Outline>().enabled = !selected;
+                buttons[i].GetComponentInChildren<UnityEngine.UI.Text>().color = selected ? Color.black : Accent;
+            }
+            UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
+        }
+
+        void SelectPracticeRow(int direction)
+        {
+            Vector2 current = practiceButtons[practiceSelection].GetComponent<RectTransform>().anchorMin;
+            float row = current.y, distance = float.PositiveInfinity;
+            foreach (var button in practiceButtons)
+            {
+                float y = button.GetComponent<RectTransform>().anchorMin.y;
+                float delta = (y - current.y) * direction;
+                if (delta > .001f && delta < distance) { distance = delta; row = y; }
+            }
+            if (float.IsPositiveInfinity(distance)) return;
+            int selected = practiceSelection; float nearest = float.PositiveInfinity;
+            for (int i = 0; i < practiceButtons.Count; i++)
+            {
+                Vector2 anchor = practiceButtons[i].GetComponent<RectTransform>().anchorMin;
+                float gap = Mathf.Abs(anchor.x - current.x);
+                if (Mathf.Abs(anchor.y - row) < .001f && gap < nearest) { nearest = gap; selected = i; }
+            }
+            SelectMenu(practiceButtons, selected);
         }
 
         void BeginMode(RunMode mode)
@@ -262,6 +424,7 @@ namespace MemeDodge
             if (session.Phase.Value != GamePhase.Title || starting) return;
             if (enableStageTesting) { StartRun().Forget(Debug.LogException); return; }
             practicePanel.SetActive(false); modePanel.SetActive(true); modePanel.transform.SetAsLastSibling();
+            SelectMenu(modeButtons, 0);
             UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
         }
 
@@ -271,6 +434,7 @@ namespace MemeDodge
             gameOverFrame = Time.frameCount;
             player.gameObject.SetActive(false); hudPanel.SetActive(false);
             resultRank.text = runMode == RunMode.Practice ? "연습\n완료" : "CLEAR!";
+            resultRank.resizeTextMaxSize = 280;
             resultScore.rectTransform.sizeDelta = new Vector2(480, 220);
             resultScore.text = runMode == RunMode.Practice ? $"잃은 목숨: {session.LostLives}"
                 : $"축하합니다!\n무한모드가 열렸습니다!\n점수: {session.Score.Value}";
@@ -618,7 +782,17 @@ namespace MemeDodge
             runCancellation?.Cancel();
             ClearDangers();
             gameOverFrame = Time.frameCount;
-            resultRank.text = GameSession.RankForScore(session.Score.Value);
+            if (runMode == RunMode.Normal)
+            {
+                int diedStage = Mathf.Clamp(lastStage + 1, 1, 5);
+                resultRank.resizeTextMaxSize = 48;
+                resultRank.text = $"현재 스테이지: {diedStage}\n남은 스테이지: {5 - diedStage}";
+            }
+            else
+            {
+                resultRank.resizeTextMaxSize = 280;
+                resultRank.text = GameSession.RankForScore(session.Score.Value);
+            }
             resultScore.rectTransform.sizeDelta = new Vector2(430, 100);
             resultScore.text = $"점수: {session.Score.Value}";
             hudPanel.SetActive(false);

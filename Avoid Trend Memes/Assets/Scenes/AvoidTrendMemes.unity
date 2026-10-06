@@ -2307,7 +2307,9 @@ MonoBehaviour:
   worldFont: {fileID: 12800000, guid: 65fdd8fad1f3c0c4d860be3c52afa2ed, type: 3}
   lineMaterial: {fileID: 2100000, guid: 5c480b69dd7d4d74c9dd8f8cfe3833b0, type: 2}
   sound: {fileID: 1493638962}
+  menuMusic: {fileID: 8300000, guid: 410539ec60bb0ce4eac11fb68a15b57b, type: 3}
   testStageNumber: 0
+  enableStageTesting: 0
   fallY: -5
   defaultPlatforms:
   - {fileID: 225116303}
